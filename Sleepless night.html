@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Sleepless Night</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.10.0/p5.js"></script>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+    body {
+        background-color: rgb(98, 184, 255);
+    }
+    .sheep {
+        position: absolute;
+        pointer-events: auto;
+    }
+    .popup {
+        position: absolute;
+        display: none;
+        z-index: 100;
+        width: 200px;
+        height: auto;
+        cursor: pointer;
+    }
+    .popup img {
+        max-width: 100%;
+        border-radius: 10px;
+    }
+</style>
+</head>
+<body>
+
+    <script>
+        let sheepGifs = ['1.gif', '2.gif', '3.gif', '4.gif']; // 양 GIF
+        let sheepImages = ['1.png', '2.png', '3.png', '4.png', '5.png', '6.png', '7.png', '8.png', '9.png', '10.png', '11.png', '12.png', '13.png', '14.png', '15.png', '16.png', '17.png', '18.png', '19.png', '20.png', '21.png', '22.png', '23.png', '24.png', '25.png', '26.png', '27.png', '28.png', '29.png', '30.png', '31.png', '32.png', '33.png', '34.png', '35.png', '36.png', '37.png', '38.png', '39.png', '40.png', '41.png', '42.png', '43.png', '44.png', '45.png', '46.png', '47.png', '48.png', '49.png', '50.png', '51.png', '52.png', '53.png', '54.png', '55.png', '56.png', '57.png', '58.png', '59.png', '60.png', '61.png', '62.png', '63.png', '64.png', '65.png', '66.png', '67.png', '68.png', '69.png', '70.png', '71.png', '72.png', '73.png', '74.png', '75.png', '76.png', '77.png', '78.png', '79.png', '80.png', '81.png', '82.png', '83.png', '84.png', '85.png', '86.png', '87.png', '88.png', '89.png', '90.png', '91.png', '92.png', '93.png', '94.png', '95.png', '96.png', '97.png', '98.png', '99.png', '100.png']; // 팝업 이미지
+        let activePopups = new Map(); // 각 GIF에 연결된 팝업 추적
+        
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            background(0, 0);
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+        
+        function draw() {
+            clear();
+        }
+        
+        function showPopupAndFollowSheep(gif) {
+            // 이미 해당 GIF에 팝업이 있으면 생성하지 않음
+            if (activePopups.has(gif)) {
+                console.log("팝업이 이미 존재합니다.");
+                return;
+            }
+        
+            // 팝업 생성
+            let randomImage = sheepImages[Math.floor(Math.random() * sheepImages.length)];
+            let popup = document.createElement('div');
+            popup.classList.add('popup');
+            popup.innerHTML = `<img src="${randomImage}" alt="Popup Image">`;
+            document.body.appendChild(popup);
+        
+            console.log("팝업 생성됨:", randomImage);
+        
+            popup.style.display = 'block';
+        
+            // 팝업을 GIF 바로 위에 위치시키고 추적
+            function follow() {
+                if (!gif || !document.body.contains(gif) || !document.body.contains(popup)) {
+                    console.log("GIF 또는 팝업이 삭제됨. 위치 업데이트 중단");
+                    return;
+                }
+        
+                let rect = gif.getBoundingClientRect();
+        
+                popup.style.left = `${rect.left + window.scrollX + rect.width / 2 - popup.offsetWidth / 2}px`; // GIF 중앙 정렬
+                popup.style.top = `${rect.top + window.scrollY - popup.offsetHeight}px`; // GIF 바로 위
+        
+                requestAnimationFrame(follow);
+            }
+        
+            follow();
+        
+            // 팝업 클릭 시 제거
+            popup.addEventListener('click', () => {
+                console.log("팝업 클릭됨: 양과 팝업 제거");
+                if (document.body.contains(gif)) document.body.removeChild(gif);
+                if (document.body.contains(popup)) document.body.removeChild(popup);
+                activePopups.delete(gif); // 팝업 제거 추적
+            });
+        
+            // 팝업을 activePopups에 저장
+            activePopups.set(gif, popup);
+        }
+        
+        function moveSheepInOneDirection(gif) {
+            let speed = 1;
+        
+            function move() {
+                let currentX = parseFloat(gif.style.left) || 0;
+                gif.style.left = `${currentX - speed}px`;
+        
+                if (currentX < -100) {
+                    gif.style.left = `${windowWidth}px`;
+                }
+        
+                requestAnimationFrame(move);
+            }
+        
+            move();
+        }
+        
+        function mousePressed() {
+            let gif = document.createElement('img');
+            gif.src = sheepGifs[Math.floor(Math.random() * sheepGifs.length)]; // 랜덤 GIF
+            gif.className = 'sheep';
+        
+            let size = random(150, 200);
+            gif.style.width = `${size}px`;
+            gif.style.height = `${size}px`;
+            gif.style.position = "absolute";
+            gif.style.left = `${mouseX}px`;
+            gif.style.top = `${mouseY}px`;
+        
+            console.log(`양 생성됨: 위치(${gif.style.left}, ${gif.style.top}), 이미지(${gif.src})`);
+        
+            let isDragging = false;
+        
+            // 마우스를 클릭 + 드래그
+            gif.addEventListener('mousedown', (event) => {
+                event.preventDefault();
+                isDragging = true;
+            });
+        
+            // 마우스를 드래그 하면 따라오게
+            document.addEventListener('mousemove', (event) => {
+                if (isDragging) {
+                    gif.style.left = `${event.pageX - gif.offsetWidth / 2}px`;
+                    gif.style.top = `${event.pageY - gif.offsetHeight / 2}px`;
+                }
+            });
+        
+            // 마우스를 놓으면 드래그 중지
+            document.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                }
+            });
+        
+            // GIF 클릭시 팝업 생성
+            gif.addEventListener('click', (event) => {
+                event.stopPropagation();
+                console.log("양 클릭됨: 팝업 생성 시도");
+                showPopupAndFollowSheep(gif);
+            });
+        
+            document.body.appendChild(gif);
+            moveSheepInOneDirection(gif);
+        }
+        </script>
+        
+
+</body>
+</html>
+
